@@ -1,6 +1,9 @@
 from django.shortcuts import render
 from django.http import HttpResponse,JsonResponse
 import math
+import json
+from  django.views.decorators.csrf import csrf_exempt
+from basic.models import UserProfile,Employee
 
 # Create your views here.
 def home(request):
@@ -77,7 +80,42 @@ def pagination(request):
     total_pages=math.ceil(len(data)/limit)
     result=data[start:end]
 
-    res={'page':page,'total_pages':total_pages,'data':result}
+    res={"status":"success","current_page":page,"total_pages":total_pages,'data':result}
 
-    return JsonResponse(res)
+    return JsonResponse(res,status=302)
 
+@csrf_exempt
+def createData(request):
+    try:    
+        if request.method =='POST':
+            data= json.loads(request.body)
+            name=data.get("name")
+            age=data.get("age")
+            city=data.get("city")
+            UserProfile.objects.create(name=name,age=age,city=city)
+
+            print(data)
+        return JsonResponse({"status": "success","data":data,"statuscode":201},status=201)
+    
+    except Exception as e:
+        return JsonResponse ({"statuscode":500,"message":"internal server error"})
+
+@csrf_exempt
+def createProduct(request):
+    if request.method=="POST":
+        data=json.loads(request.body)
+        print(data)
+    return JsonResponse({"status":"success", 'data':data, "statuscode":201})    
+
+
+@csrf_exempt
+def createEmployee(request):
+    try:
+        if request.method=="POST":
+            data=json.loads(request.body)
+            Employee.objects.create(emp_name=data.get("name"),emp_salary=data.get("sal"),emp_email=data.get ("email"))
+         
+        return JsonResponse({"status":"success", 'data':data, "statuscode":201},status=201)        
+    except Exception as e:
+        print(e)
+        return JsonResponse({"status":"error","message":e},status=500)  
